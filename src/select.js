@@ -105,7 +105,7 @@
     ctrl.selected = undefined;
     ctrl.open = false;
     ctrl.focus = false;
-    ctrl.focusser = undefined; //Reference to input element used to handle focus events  
+    ctrl.focusser = undefined; //Reference to input element used to handle focus events
     ctrl.disabled = undefined; // Initialized inside uiSelect directive link function
     ctrl.resetSearchInput = undefined; // Initialized inside uiSelect directive link function
     ctrl.refreshDelay = undefined; // Initialized inside uiSelectChoices directive link function
@@ -249,7 +249,7 @@
         _resetSearchInput();
         ctrl.open = false;
         $timeout(function(){
-          ctrl.focusser[0].focus();          
+          ctrl.focusser[0].focus();
         },0,false);
       }
     };
@@ -430,7 +430,7 @@
           if (e.which === KEY.TAB || KEY.isControl(e) || KEY.isFunctionKey(e) || e.which === KEY.ESC || e.which == KEY.ENTER || e.which === KEY.BACKSPACE) {
             return;
           }
-          
+
           $select.activate(focusser.val()); //User pressed some regualar key, so we pass it to the search input
           focusser.val('');
           scope.$digest();
@@ -547,10 +547,10 @@
           }
           element.querySelectorAll('.ui-select-match').replaceWith(transcludedMatch);
 
-          var transcludedChoices = transcluded.querySelectorAll('.ui-select-choices');
+          var transcludedChoices = transcluded.querySelectorAll('ui-select-choices, [ui-select-choices]');
           transcludedChoices.removeAttr('ui-select-choices'); //To avoid loop in case directive as attr
           if (transcludedChoices.length !== 1) {
-            throw uiSelectMinErr('transcluded', "Expected 1 .ui-select-choices but got '{0}'.", transcludedChoices.length);
+            throw uiSelectMinErr('transcluded', "Expected 1 ui-select-choices but got '{0}'.", transcludedChoices.length);
           }
           element.querySelectorAll('.ui-select-choices').replaceWith(transcludedChoices);
         });
@@ -559,51 +559,49 @@
   }])
 
   .directive('uiSelectChoices',
-    ['uiSelectConfig', 'RepeatParser', 'uiSelectMinErr', '$compile',
-    function(uiSelectConfig, RepeatParser, uiSelectMinErr, $compile) {
+    ['uiSelectConfig', 'RepeatParser', 'uiSelectMinErr', '$templateCache',
+    function(uiSelectConfig, RepeatParser, uiSelectMinErr, $templateCache) {
 
     return {
       restrict: 'EA',
       require: '^uiSelect',
-      replace: true,
-      transclude: true,
-      templateUrl: function(tElement) {
+      compile: function(tElement, tAttrs) {
         // Gets theme attribute from parent (ui-select)
         var theme = tElement.parent().attr('theme') || uiSelectConfig.theme;
-        return theme + '/choices.tpl.html';
-      },
-
-      compile: function(tElement, tAttrs) {
+        var templateUrl = theme + '/choices.tpl.html';
+        var choicesContent = angular.element($templateCache.get(templateUrl));
 
         if (!tAttrs.repeat) throw uiSelectMinErr('repeat', "Expected 'repeat' expression.");
 
-        return function link(scope, element, attrs, $select, transcludeFn) {
-          
-          // var repeat = RepeatParser.parse(attrs.repeat);
-          var groupByExp = attrs.groupBy;
+        var groupByExp = tAttrs.groupBy;
+        var parserResult = RepeatParser.parse(tAttrs.repeat, groupByExp);
 
-          $select.parseRepeatAttr(attrs.repeat, groupByExp); //Result ready at $select.parserResult
+        if(groupByExp) {
+          var groups = choicesContent.querySelectorAll('.ui-select-choices-group');
+          if (groups.length !== 1) throw uiSelectMinErr('rows', "Expected 1 .ui-select-choices-group but got '{0}'.", groups.length);
+          groups.attr('ng-repeat', RepeatParser.getGroupNgRepeatExpression());
+        }
 
-          if(groupByExp) {
-            var groups = element.querySelectorAll('.ui-select-choices-group');
-            if (groups.length !== 1) throw uiSelectMinErr('rows', "Expected 1 .ui-select-choices-group but got '{0}'.", groups.length);
-            groups.attr('ng-repeat', RepeatParser.getGroupNgRepeatExpression());
-          }
+        var choices = choicesContent.querySelectorAll('.ui-select-choices-row');
+        if (choices.length !== 1) {
+          throw uiSelectMinErr('rows', "Expected 1 .ui-select-choices-row but got '{0}'.", choices.length);
+        }
 
-          var choices = element.querySelectorAll('.ui-select-choices-row');
-          if (choices.length !== 1) {
-            throw uiSelectMinErr('rows', "Expected 1 .ui-select-choices-row but got '{0}'.", choices.length);
-          }
+        choices.attr('ng-repeat', RepeatParser.getNgRepeatExpression(parserResult.itemName, '$select.items', parserResult.trackByExp, groupByExp))
+            .attr('ng-mouseenter', '$select.setActiveItem('+parserResult.itemName +')')
+            .attr('ng-click', '$select.select(' + parserResult.itemName + ')');
 
-          choices.attr('ng-repeat', RepeatParser.getNgRepeatExpression($select.parserResult.itemName, '$select.items', $select.parserResult.trackByExp, groupByExp))
-              .attr('ng-mouseenter', '$select.setActiveItem('+$select.parserResult.itemName +')')
-              .attr('ng-click', '$select.select(' + $select.parserResult.itemName + ')');
+        var rowsInner = choicesContent.querySelectorAll('.ui-select-choices-row-inner');
+        if (rowsInner.length !== 1)
+          throw uiSelectMinErr('rows', "Expected 1 .ui-select-choices-row-inner but got '{0}'.", rowsInner.length);
 
-          var rowsInner = element.querySelectorAll('.ui-select-choices-row-inner');
-          if (rowsInner.length !== 1) throw uiSelectMinErr('rows', "Expected 1 .ui-select-choices-row-inner but got '{0}'.", rowsInner.length);
-          rowsInner.attr('uis-transclude-append', ''); //Adding uisTranscludeAppend directive to row element after choices element has ngRepeat
+        // transclude main element children to inner row for repetition via
+        // ng-repeat and make choices content the new child of the main element
+        rowsInner.append(tElement.children());
+        tElement.append(choicesContent);
 
-          $compile(element, transcludeFn)(scope); //Passing current transcludeFn to be able to append elements correctly from uisTranscludeAppend
+        return function link(scope, element, attrs, $select) {
+          $select.parseRepeatAttr(attrs.repeat, attrs.groupBy);
 
           scope.$watch('$select.search', function() {
             $select.activeIndex = 0;
@@ -619,15 +617,7 @@
       }
     };
   }])
-  .directive('uisTranscludeAppend', function () {
-    return {
-      link: function (scope, element, attrs, ctrl, transclude) {
-          transclude(scope, function (clone) {
-            element.append(clone);
-          });
-        }
-      };
-  })
+
   .directive('uiSelectMatch', ['uiSelectConfig', function(uiSelectConfig) {
     return {
       restrict: 'EA',

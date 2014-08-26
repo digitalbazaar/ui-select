@@ -41,7 +41,8 @@
 }
 
 /* Fix dropdown width for Selectize theme */
-.selectize-control > .selectize-dropdown {
+.selectize-control > .selectize-dropdown,
+.selectize-control > ui-select-choices > .selectize-dropdown {
   width: 100%;
 }
 
@@ -88,15 +89,22 @@
   right: 15px;
 }
 
-.ui-select-bootstrap > .ui-select-choices {
+.ui-select-bootstrap > .ui-select-choices,
+.ui-select-bootstrap > ui-select-choices > .ui-select-choices {
   width: 100%;
 }
 
 /* See Scrollable Menu with Bootstrap 3 http://stackoverflow.com/questions/19227496 */
-.ui-select-bootstrap > .ui-select-choices {
+.ui-select-bootstrap > .ui-select-choices,
+.ui-select-bootstrap ui-select-choices > .ui-select-choices {
   height: auto;
   max-height: 200px;
   overflow-x: hidden;
+}
+
+/* Open Bootstrap dropdown-menu that is nested in ui-select-choices element */
+.open > ui-select-choices > .dropdown-menu {
+  display: block;
 }
 
 .ui-select-bootstrap .ui-select-choices-row>a {

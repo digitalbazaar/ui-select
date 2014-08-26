@@ -285,7 +285,7 @@ describe('ui-select tests', function() {
           <ui-select-match></ui-select-match> \
         </ui-select>'
       );
-    }).toThrow(new Error('[ui.select:transcluded] Expected 1 .ui-select-choices but got \'0\'.'));
+    }).toThrow(new Error('[ui.select:transcluded] Expected 1 ui-select-choices but got \'0\'.'));
   });
 
   it('should throw when no repeat attribute is provided to ui-select-choices', function() {
@@ -332,7 +332,7 @@ describe('ui-select tests', function() {
     clickItem(el, 'Samantha');
 	  expect(scope.selection.selected).toBe(scope.people[5]);
   });
-  
+
   it('should parse the model correctly using alias', function() {
     var el = compileTemplate(
       '<ui-select ng-model="selection.selected"> \
@@ -347,7 +347,7 @@ describe('ui-select tests', function() {
     scope.$digest();
     expect(getMatchLabel(el)).toEqual('Samantha');
   });
-  
+
   it('should format the model correctly using property of alias', function() {
     var el = compileTemplate(
       '<ui-select ng-model="selection.selected"> \
@@ -361,7 +361,7 @@ describe('ui-select tests', function() {
     clickItem(el, 'Samantha');
 	  expect(scope.selection.selected).toBe('Samantha');
   });
-  
+
   it('should parse the model correctly using property of alias', function() {
     var el = compileTemplate(
       '<ui-select ng-model="selection.selected"> \
@@ -376,7 +376,7 @@ describe('ui-select tests', function() {
     scope.$digest();
     expect(getMatchLabel(el)).toEqual('Samantha');
   });
-  
+
   it('should parse the model correctly using property of alias with async choices data', function() {
     var el = compileTemplate(
       '<ui-select ng-model="selection.selected"> \
@@ -415,13 +415,13 @@ describe('ui-select tests', function() {
     scope.$digest();
     expect(getMatchLabel(el)).toEqual('Samantha');
   });
-  
+
   it('should format the model correctly without alias', function() {
     var el = createUiSelect();
     clickItem(el, 'Samantha');
 	  expect(scope.selection.selected).toBe(scope.people[5]);
   });
-  
+
   it('should parse the model correctly without alias', function() {
     var el = createUiSelect();
     scope.selection.selected = scope.people[5];

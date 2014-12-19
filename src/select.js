@@ -195,6 +195,30 @@
 
       });
 
+      //From view --> model
+      ctrl.ngModel.$parsers.unshift(function (inputValue) {
+        var locals = {};
+        locals[ctrl.parserResult.itemName] = inputValue;
+        var result = ctrl.parserResult.modelMapper($scope, locals);
+        return result;
+      });
+
+      //From model --> view
+      ctrl.ngModel.$formatters.unshift(function (inputValue) {
+        var data = ctrl.parserResult.source($scope);
+        if (data){
+          for (var i = data.length - 1; i >= 0; i--) {
+            var locals = {};
+            locals[ctrl.parserResult.itemName] = data[i];
+            var result = ctrl.parserResult.modelMapper($scope, locals);
+            if (result == inputValue){
+              return data[i];
+            }
+          }
+        }
+        return inputValue;
+      });
+
     };
 
     var _refreshDelayPromise;
@@ -358,30 +382,6 @@
         var ngModel = ctrls[1];
 
         $select.onSelectCallback = $parse(attrs.onSelect);
-
-        //From view --> model
-        ngModel.$parsers.unshift(function (inputValue) {
-          var locals = {};
-          locals[$select.parserResult.itemName] = inputValue;
-          var result = $select.parserResult.modelMapper(scope, locals);
-          return result;
-        });
-
-        //From model --> view
-        ngModel.$formatters.unshift(function (inputValue) {
-          var data = $select.parserResult.source(scope);
-          if (data){
-            for (var i = data.length - 1; i >= 0; i--) {
-              var locals = {};
-              locals[$select.parserResult.itemName] = data[i];
-              var result = $select.parserResult.modelMapper(scope, locals);
-              if (result == inputValue){
-                return data[i];
-              }
-            }
-          }
-          return inputValue;
-        });
 
         //Set reference to ngModel from uiSelectCtrl
         $select.ngModel = ngModel;
